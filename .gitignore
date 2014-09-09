@@ -1,5 +1,3 @@
 grader/target/
 project/target/
-target/resolution-cache/
-target/scala-2.10/
-target/streams/
+target/*

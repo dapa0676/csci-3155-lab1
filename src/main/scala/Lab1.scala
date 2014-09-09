@@ -1,6 +1,7 @@
 object Lab1 extends jsy.util.JsyApplication {
   import jsy.lab1.ast._
   import jsy.lab1.Parser
+  import scala.annotation.tailrec
   
   /*
    * CSCI 3155: Lab 1
@@ -75,24 +76,57 @@ object Lab1 extends jsy.util.JsyApplication {
 
   /* Exercises */
 
-  def abs(n: Double): Double = throw new UnsupportedOperationException
+  def abs(n: Double): Double = if (n > 0) n else -n 
 
-  def xor(a: Boolean, b: Boolean): Boolean = throw new UnsupportedOperationException
+  def xor(a: Boolean, b: Boolean): Boolean = {
+    if (a) { if (b) false else true } else b
+  }
 
-  def repeat(s: String, n: Int): String = throw new UnsupportedOperationException
+
+//  def repeat(s: String, n: Int): String = throw new UnsupportedOperationException
+  def repeat(s: String, n: Int): String = {
+    require(n >= 0)
+    if (n == 0) "" else s + repeat(s,n-1)
+  }
   
-  def sqrtStep(c: Double, xn: Double): Double = throw new UnsupportedOperationException
+//  def sqrtStep(c: Double, xn: Double): Double = throw new UnsupportedOperationException
+  def sqrtStep(c: Double, xn: Double): Double = xn - (xn * xn - c) / (2 * xn)
 
-  def sqrtN(c: Double, x0: Double, n: Int): Double = throw new UnsupportedOperationException
+//  def sqrtN(c: Double, x0: Double, n: Int): Double = throw new UnsupportedOperationException
+  @tailrec
+  def sqrtN(c: Double, x0: Double, n: Int): Double = {
+    require(c >= 0 && n >= 0)
+    if (n == 0) x0 else sqrtN(c,sqrtStep(c,x0), n-1)
+  }
+  def sqrtNloop(c: Double, x0: Double, n: Int): Double = {
+    require(c >= 0 && n >= 0)
+    var xn = x0
+    var nc = n
+    while (nc > 0) {
+      xn = sqrtStep(c,xn)
+      nc = nc - 1
+    }
+    xn
+  }
   
-  def sqrtErr(c: Double, x0: Double, epsilon: Double): Double =
-    throw new UnsupportedOperationException
+//  def sqrtErr(c: Double, x0: Double, epsilon: Double): Double
+  @tailrec
+  def sqrtErr(c: Double, x0: Double, epsilon: Double): Double = {
+    require(c >= 0 && epsilon > 0)
+    if (abs(x0*x0-c) < epsilon) x0 else sqrtErr(c,sqrtStep(c,x0),epsilon)
+  }
+  def sqrtErrLoop(c: Double, x0: Double, epsilon: Double): Double = {
+    require(c >= 0 && epsilon > 0)
+    var xn = x0
+    while (abs(xn*xn-c) >= epsilon) xn = sqrtStep(c,xn)
+    xn
+  }
 
   def sqrt(c: Double): Double = {
     require(c >= 0)
     if (c == 0) 0 else sqrtErr(c, 1.0, 0.0001)
   }
-  
+
   /* Search Tree */
   
   sealed abstract class SearchTree
@@ -102,12 +136,15 @@ object Lab1 extends jsy.util.JsyApplication {
   def repOk(t: SearchTree): Boolean = {
     def check(t: SearchTree, min: Int, max: Int): Boolean = t match {
       case Empty => true
-      case Node(l, d, r) => throw new UnsupportedOperationException
+      case Node(l, d, r) => (d <= max) && (d >= min) && check(l, min, d) && check(r, d, max)
     }
     check(t, Int.MinValue, Int.MaxValue)
   }
   
-  def insert(t: SearchTree, n: Int): SearchTree = throw new UnsupportedOperationException
+  def insert(t: SearchTree, n: Int): SearchTree = t match {
+    case Empty => Node(Empty, n, Empty)
+    case Node(l,d,r) => if (n >= d) Node(l,d,insert(r,n)) else Node(insert(l,n),d,r)
+  }
   
   def deleteMin(t: SearchTree): (SearchTree, Int) = {
     require(t != Empty)
@@ -115,11 +152,25 @@ object Lab1 extends jsy.util.JsyApplication {
       case Node(Empty, d, r) => (r, d)
       case Node(l, d, r) =>
         val (l1, m) = deleteMin(l)
-        throw new UnsupportedOperationException
+        (Node(l1, d, r), m)
     }
   }
  
-  def delete(t: SearchTree, n: Int): SearchTree = throw new UnsupportedOperationException
+  def delete(t: SearchTree, n: Int): SearchTree = {
+    def instree(t: SearchTree, n: SearchTree): SearchTree = (t, n) match {
+      case (_, Empty) => t
+      case (Empty, _) => n
+      case (Node(l,d,r), Node(nl,nd,nr)) =>
+        if (nd >= d) Node(l,d,instree(r,n)) else Node(instree(l,n),d,r)
+    }
+    t match {
+      case Empty => Empty
+      case Node(l,d,r) =>
+        if (d == n) instree(r, l)
+        else if (n > d) Node(l,d,delete(r,n))
+        else Node(delete(l,n),d,r)
+    }
+  }
   
   /* JavaScripty */
   

@@ -156,7 +156,20 @@ object Lab1 extends jsy.util.JsyApplication {
     }
   }
  
-  def delete(t: SearchTree, n: Int): SearchTree = {
+  def delete(t: SearchTree, n: Int): SearchTree = t match {
+    case Empty => Empty
+    case Node(l,d,r) =>
+      if (d == n) r match {
+        case Empty => l
+        case _ =>
+          val (r1,m): (SearchTree,Int) = deleteMin(r)
+          Node(l,m,r1)
+      }
+      else if (d < n) Node(l,d,delete(r,n))
+      else Node(delete(l,n),d,r)
+  }
+  
+  def delete2(t: SearchTree, n: Int): SearchTree = {
     def instree(t: SearchTree, n: SearchTree): SearchTree = (t, n) match {
       case (_, Empty) => t
       case (Empty, _) => n
@@ -171,6 +184,7 @@ object Lab1 extends jsy.util.JsyApplication {
         else Node(delete(l,n),d,r)
     }
   }
+
   
   /* JavaScripty */
   
